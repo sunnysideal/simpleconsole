@@ -1,0 +1,293 @@
+:root{
+	--temp-colour: #CCCCCC;
+	--temp-min-colour: #0077bb;
+	--temp-max-colour: #FF5555;
+	--page-text-colour: #DDDDDD;
+	--titles-colour: #FFFFFF;
+	--page-background-colour: #222222;
+	--observation-background-colour: #242424;
+	--wind-needle-colour: #FF5555;
+	--wind-gauge-colour: #0077bb;
+}
+
+*{
+padding: 0px;
+margin: 0px;
+box-sizing: border-box;
+}
+
+/*
+settings div hidden by default
+*/
+.settings {
+	display:none;
+	position:relative;
+	background-color:#ffffff;
+
+	padding: 0.5em;
+	width: 100%;
+	height: 100%;
+}
+
+.ct-series-a .ct-line {
+  /* Set the colour of this series line */
+
+  /* Control the thikness of your lines */
+  stroke-width: 2px;
+   stroke: var(--page-text-colour);
+}
+
+body, html {
+  width:100%;  height:100%; margin:0; padding:0;
+  overflow:hidden;
+  font-family: 'Roboto';
+  	background-color: var(--page-background-colour);
+	color: var(--page-text-colour);
+	font-size: 2vw;
+	position:relative;
+	align-content: center;
+	align-items: center;
+
+}
+
+.barometer {grid-area: baro;position:relative;width:100%;height:100%;}
+.pressure-trend {grid-area: trend;width:100%;height:100%;text-align: center;}
+.container {
+	padding: 0.5em;
+	width: 100%;
+	height: 100%;
+}
+
+
+.pressure-container {
+	display:grid;
+	position:relative;
+
+	grid-template-areas:
+			" baro"
+			" trend";
+	grid-template-columns: minmax(0, 1fr);
+	grid-template-rows: minmax(0, 1fr) minmax(0, 0.1fr);
+
+}
+.obs-title{
+	color: var(--titles-colour); grid-area:obs-title;font-size:90%; text-align:center;
+}
+
+.air-temperature-min, .air-temperature-min-time{
+ color: var(--temp-min-colour);
+}
+
+.air-temperature-max, .air-temperature-max-time{
+ color: var(--temp-max-colour);
+}
+
+.air-temperature-max-time, .air-temperature-min-time {
+font-size:60%;
+}
+
+.air-temperature-min, .air-temperature-max{
+ font-size:70%;
+}
+
+.feels-like-title, .feels-like {font-size:70%;}
+
+.air-temperature-title { grid-area: title;text-align:center;}
+.air-temperature { font-size: 300%;grid-area: deg; text-align:center;}
+.feels-like-title {grid-area: feels-title; text-align:center;align-self:end;}
+.feels-like {grid-area: feels; text-align:center;}
+.air-temperature-min { grid-area: min;   text-align:center;align-self:end;}
+.air-temperature-max { grid-area: max;  text-align:center;align-self:end;}
+.air-temperature-min-time { grid-area: min-time; text-align:center;}
+.air-temperature-max-time { grid-area: max-time; text-align:center;}
+
+.temperature-container {
+	display:grid;
+	position:relative;
+
+	grid-template-columns: repeat(12,1fr);
+	grid-template-rows: minmax(0, 3fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+		grid-template-areas:
+
+			" deg deg deg deg deg deg deg deg deg deg deg deg"
+			" feels-title feels-title  feels-title feels-title feels-title feels-title feels-title feels-title feels-title feels-title feels-title feels-title "
+			" feels feels feels feels feels feels feels feels feels feels feels feels"
+			". . min min min . . max max max . ."
+
+            ". . min-time min-time min-time . . max-time max-time max-time . . ";
+}
+
+.wind-beaufort {grid-area:2;text-align:center;align-self:center;}
+
+.chart-title  { grid-area: 1 ;text-align:center;}
+.chart { grid-area: 2 ; width:100%;height:100%;justify-self:center;position:relative; text-align:center; }
+
+
+.wind-gust-title {grid-area:gust-title;text-align:center;align-self:end;}
+.wind-gust {grid-area:gust;text-align:center;align-self:start;}
+.wind-avg-title {grid-area:avg-title;text-align:center;align-self:end;}
+.wind-avg {grid-area:avg;text-align:center;align-self:start;}
+.wind-holder {grid-row:1;position:relative;width:100%;height:100%;}
+.wind-compass {zIndex=-1;left:0px;top:0px;position:absolute;width:100%;height:100%;}
+
+ .wind-compass-container {
+	display:grid;
+	left:0px;
+	top:0px;
+	position:absolute;
+	width: 100%;
+	height: 100%;
+	grid-template-areas:
+			"  gust-title . .  avg-title "
+			"  gust  . .  avg "
+			". . . ."
+			". . . ."
+			". . . ."
+            ". . . .";
+	grid-template-columns:  minmax(0, 1fr) minmax(0, 1fr)  minmax(0, 1fr) minmax(0, 1fr);
+	grid-template-rows:  minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) ;
+}
+
+.wind-container {
+	display:grid;
+	position:relative;
+
+	grid-template-columns: minmax(0, 1fr);
+	grid-template-rows: minmax(0, 6fr) minmax(0, 1fr);
+
+}
+
+.conditions-icon {grid-area:current-icon;position:relative;width:100%;height:100%;text-align:center;display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 500%; }
+
+.forecast-hour-1-time {grid-area:forecast-hour-1-time;text-align:center;font-size: 200%;}
+.forecast-hour-2-time {grid-area:forecast-hour-2-time;text-align:center;font-size: 200%;}
+.forecast-hour-3-time {grid-area:forecast-hour-3-time;text-align:center;font-size: 200%;}
+
+.forecast-hour-1-icon {grid-area:forecast-hour-1-icon;text-align:center;font-size: 200%;}
+.forecast-hour-2-icon {grid-area:forecast-hour-2-icon;text-align:center;font-size: 200%;}
+.forecast-hour-3-icon {grid-area:forecast-hour-3-icon;text-align:center;font-size: 200%;}
+
+.forecast-hour-1-temp {grid-area:forecast-hour-1-temp;text-align:center;}
+.forecast-hour-2-temp {grid-area:forecast-hour-2-temp;text-align:center;}
+.forecast-hour-3-temp {grid-area:forecast-hour-3-temp;text-align:center;}
+
+.forecast-hour-1-precip-percent {grid-area:forecast-hour-1-precip-percent;text-align:center;font-size: 80%;}
+.forecast-hour-2-precip-percent {grid-area:forecast-hour-2-precip-percent;text-align:center;font-size: 80%;}
+.forecast-hour-3-precip-percent {grid-area:forecast-hour-3-precip-percent;text-align:center;font-size: 80%;}
+
+.forecast-hour-1-wind-dir {grid-area:forecast-hour-1-wind-dir;text-align:center;align-self:end;font-size: 150%;}
+.forecast-hour-2-wind-dir {grid-area:forecast-hour-2-wind-dir;text-align:center;align-self:end;font-size: 150%;}
+.forecast-hour-3-wind-dir {grid-area:forecast-hour-3-wind-dir;text-align:center;align-self:end;font-size: 150%;}
+
+.forecast-hour-1-wind-spd {grid-area:forecast-hour-1-wind-spd;text-align:center;font-size: 80%;}
+.forecast-hour-2-wind-spd {grid-area:forecast-hour-2-wind-spd;text-align:center;font-size: 80%;}
+.forecast-hour-3-wind-spd {grid-area:forecast-hour-3-wind-spd;text-align:center;font-size: 80%;}
+
+.conditions-container {
+	display:grid;
+	position:relative;
+
+	grid-template-areas:
+
+			"forecast-hour-1-time	forecast-hour-2-time forecast-hour-3-time"
+		"forecast-hour-1-icon forecast-hour-2-icon forecast-hour-3-icon"
+		" forecast-hour-1-temp forecast-hour-2-temp forecast-hour-3-temp"
+"forecast-hour-1-precip-percent forecast-hour-2-precip-percent forecast-hour-3-precip-percent"
+"forecast-hour-1-wind-dir forecast-hour-2-wind-dir forecast-hour-3-wind-dir"
+"forecast-hour-1-wind-spd forecast-hour-2-wind-spd forecast-hour-3-wind-spd";
+
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+	grid-template-rows: minmax(0, 1.5fr) minmax(0,1.5fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) ;
+}
+
+
+.chart-container {
+	display:grid;
+	position:relative;
+
+
+	grid-template-columns: minmax(0, 1fr);
+	grid-template-rows: minmax(0, 1fr) minmax(0, 6fr) ;
+
+}
+
+.date, .time, .battery-title, .power-mode-title,.battery-value, .power-mode{font-size:50%;text-align:center;align-self:center;}
+
+
+.sunrise-image {color:orange;font-size:100%;grid-area: image-rise;text-align:center;align-self:end; }
+.solarnoon-image {color:gold;font-size:100%;grid-area: image-noon; text-align:center;align-self: center;}
+.sunset-image {color:darkorange;font-size:100%;grid-area: image-set;text-align:center;align-self:end; }
+
+.today-sunrise-time {font-size:75%;grid-area: today-time-rise;text-align:center;}
+.today-solarnoon-time {font-size:75%;grid-area:today-time-noon;text-align:center;}
+.today-sunset-time {font-size:75%;grid-area: today-time-set;text-align:center;}
+.tomorrow-sunrise-time {font-size:65%;grid-area: tomorrow-time-rise;text-align:center;}
+.tomorrow-solarnoon-time {font-size:65%;grid-area:tomorrow-time-noon;text-align:center;}
+.tomorrow-sunset-time {font-size:65%;grid-area: tomorrow-time-set;text-align:center;}
+
+.solar-today-title {font-size:60%;grid-area:today-title;text-align:center;}
+.solar-tomorrow-title {font-size:50%;grid-area:tomorrow-title;text-align:center;align-self: end;}
+.solar-tomorrow-text {font-size:65%;grid-area:tomorrow-text;text-align:center;align-self: center;}
+
+.illuminance-title {font-size:60%;grid-area: title-illuminance;text-align:center;align-self: end;}
+.uv-title {font-size:60%;grid-area: title-uv;text-align:center;align-self: end;}
+.solar-radiation-title {font-size:60%;grid-area: title-solar-radiation;text-align:center;align-self: end;}
+.illuminance-value {font-size:60%;grid-area: illuminance;text-align:center;}
+.uv-value {font-size:60%;grid-area: uv;text-align:center;}
+.solar-radiation {font-size:60%;grid-area: radiation;text-align:center;}
+
+
+
+
+.solar-container {
+	display:grid;
+	position:relative;
+
+	grid-template-areas:
+
+			"image-rise image-noon image-set"
+
+            "today-time-rise today-time-noon today-time-set"
+
+						"tomorrow-title tomorrow-title tomorrow-title "
+						"tomorrow-time-rise tomorrow-time-noon tomorrow-time-set"
+						"tomorrow-text tomorrow-text tomorrow-text "
+						"title-illuminance title-uv title-solar-radiation"
+						"illuminance uv radiation";
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+	grid-template-rows: minmax(0, 0.7fr) auto  minmax(0, 0.4fr) minmax(0, 0.4fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.grid-tl {grid-area: top-left;background-color:var(--observation-background-colour);}
+.grid-tm {grid-area: top-centre;background-color:var(--observation-background-colour);position:relative;}
+.grid-tr {grid-area: top-right;background-color:var(--observation-background-colour);}
+
+.grid-ml {grid-area: centre-left;background-color:var(--observation-background-colour);}
+.grid-mm {grid-area: centre-centre;background-color:var(--observation-background-colour);}
+.grid-mr {grid-area: centre-right;background-color:var(--observation-background-colour);}
+
+.grid-bl {grid-area: bottom-left;background-color:var(--observation-background-colour);}
+.grid-bm {grid-area: bottom-centre;background-color:var(--observation-background-colour);}
+.grid-br {grid-area: bottom-right;background-color:var(--observation-background-colour);}
+
+.console-container {
+	display:grid;
+
+	padding: 0.5em;
+	grid-row-gap: 1vh;
+	grid-column-gap: 1vh;
+	position:relative;
+
+	width: 100%;
+	height: 100%;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+	grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.1fr);
+	grid-template-areas:
+		" top-left top-centre top-right"
+		" centre-left centre-centre centre-right"
+		" bottom-left bottom-centre bottom-right";
+
+}

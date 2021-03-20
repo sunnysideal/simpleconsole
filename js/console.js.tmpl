@@ -1,0 +1,141 @@
+// Initial values from weewx generator
+
+// station lat/lon values for solar stats calculator
+var latitudeDeg = ConvertDMToDD($station.latitude[0],$station.latitude[1],'$station.latitude[2]');
+var longitudeDeg = ConvertDMToDD($station.longitude[0],$station.longitude[1],'$station.longitude[2]');
+
+// day temperature values
+updateHTML('air_temperature', '$current.outTemp');
+updateHTML('air_temperature_min', '$day.outTemp.min');
+updateHTML('air_temperature_min_time', '$day.outTemp.minTime.format("%H:%M")');
+updateHTML('air_temperature_max', '$day.outTemp.max');
+updateHTML('air_temperature_max_time', '$day.outTemp.maxTime.format("%H:%M")');
+
+// day observation timestamp
+updateHTML('obs_date', '$current.dateTime.format("%a %d %b")');
+updateHTML('obs_time', '$current.dateTime.format("%H:%M")');
+
+// forecast from openweathermap
+owmkey="9781439a8ae8c57f5cd54cf33e9eb174";
+units="metric";
+owmurl="http://api.openweathermap.org/data/2.5/onecall?lat="+latitudeDeg+"&lon="+longitudeDeg+"&exclude=current,minutely,daily&units="+units+"&appid="+owmkey;
+
+async function getForecast() {
+const response = await fetch(owmurl);
+const forecastJson = await response.json(); //extract JSON from the http response
+forecast = forecastJson['hourly'];
+
+gap=2
+for(x=1;x<4;x++){
+
+let sunTimes = SunCalc.getTimes(today, latitudeDeg, longitudeDeg);
+
+var d = new Date(forecast[x*gap]['dt']*1000);
+forecasthour = d.getHours();
+ if (Number(forecasthour) > 12) {
+    forecastTime = Number(forecasthour) - 12;
+  } else if (Number(forecasthour) == 0) {
+    forecastTime = 12;
+  } else {
+    forecastTime = Number(forecasthour)
+  }
+
+if(forecast[x*gap]['dt'] > sunTimes.sunrise.getTime() && forecast[x*gap]['dt'] < sunTimes.sunset.getTime() )
+	owmtime='day';
+else
+	owmtime='night';
+
+//updateHTML('forecast-hour-'+x+'-time',d.getHours() );
+updateHTML('forecast-hour-'+x+'-time',"<i class=\"wi wi-time-" + forecastTime + "\"></i>" );
+updateHTML('forecast-hour-'+x+'-icon',"<i class=\"wi wi-owm-"+owmtime+"-"+ forecast[x*gap]['weather'][0]['id'] + "\"></i>");
+updateHTML('forecast-hour-'+x+'-temp',Math.round(forecast[x*gap]['temp']));
+updateHTML('forecast-hour-'+x+'-precip-percent',forecast[x*gap]['pop']);
+updateHTML('forecast-hour-'+x+'-wind-dir',"<i class=\"wi wi-wind from-" + forecast[x*gap]['wind_deg'] + "-deg\"></i>");
+updateHTML('forecast-hour-'+x+'-wind-spd',Math.round(forecast[x*gap]['wind_speed']*10)/10);
+
+
+}
+
+}
+
+getForecast();
+
+function ConvertDMToDD(degrees, minutes, direction) {
+    var dd = degrees + minutes/60 ;
+
+    if (direction == "S" || direction == "W") {
+        dd = dd * -1;
+    } // Don't do anything for N or E
+    return dd;
+}
+
+
+populateSunRiseSet(latitudeDeg,longitudeDeg);
+function populateSunRiseSet(latitude, longitude) {
+  today = new Date();
+  tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+
+  let sunTimes = SunCalc.getTimes(today, latitude, longitude);
+  let tomorrowSunTimes = SunCalc.getTimes(tomorrow, latitude, longitude);
+
+  lengthToday = sunTimes.sunset.getTime() - sunTimes.sunrise.getTime(); //in milliseconds
+  lengthTomorrow = tomorrowSunTimes.sunset.getTime() - tomorrowSunTimes.sunrise.getTime(); //in milliseconds
+  diffDayLength = lengthTomorrow-lengthToday; // in milliseconds
+
+
+  let sunriseStr = getHumanTimeHHMM(sunTimes.sunrise.getTime() / 1000);
+  let sunsetStr = getHumanTimeHHMM(sunTimes.sunset.getTime() / 1000);
+  let solarNoonStr = getHumanTimeHHMM(sunTimes.solarNoon.getTime() / 1000);
+  let tomorrowSunriseStr = getHumanTimeHHMM(tomorrowSunTimes.sunrise.getTime() / 1000);
+  let tomorrowSunsetStr = getHumanTimeHHMM(tomorrowSunTimes.sunset.getTime() / 1000);
+  let tomorrowSolarNoonStr = getHumanTimeHHMM(tomorrowSunTimes.solarNoon.getTime() / 1000);
+  updateHTML('sunrise_time', sunriseStr);
+  updateHTML('sunset_time', sunsetStr);
+  updateHTML('solarnoon_time', solarNoonStr);
+  updateHTML('tomorrow_sunrise_time', tomorrowSunriseStr);
+  updateHTML('tomorrow_sunset_time', tomorrowSunsetStr);
+  updateHTML('tomorrow_solarnoon_time', tomorrowSolarNoonStr);
+  if(diffDayLength>0){
+    updateHTML('solar_tomorrow_text', getHumanTimeMMSS(diffDayLength/1000)+" longer");
+  }
+  else {
+    updateHTML('solar_tomorrow_text', getHumanTimeMMSS(-diffDayLength/1000)+" shorter");
+  }
+}
+
+// update element HTML
+function updateHTML(updateElement, value) {
+  if (document.getElementsByClassName(updateElement)) {
+    var getClass = document.getElementsByClassName(updateElement);
+    for (i = 0; i < getClass.length; i++) {
+      getClass[i].innerHTML = value;
+    }
+  }
+} // end updateHTML
+
+function getHumanTimeHHMM(epoch) {
+  var d = new Date(epoch * 1000);
+  time = pad(d.getHours(), 2) + ":" + pad(d.getMinutes(), 2);
+
+  return time;
+} // end getHumanTimeHHMM
+
+function getHumanTimeMMSS(epoch) {
+  var d = new Date(epoch * 1000);
+  time = pad(d.getMinutes(), 2) + ":" + pad(d.getSeconds(), 2);
+
+  return time;
+}
+
+// pad leading zeros in numbers
+function pad(n, len) {
+
+  s = n.toString();
+  if (s.length < len) {
+    s = ('0000000000' + s).slice(-len);
+  }
+
+  return s;
+}
+
