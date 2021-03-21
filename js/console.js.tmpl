@@ -4,6 +4,12 @@
 var latitudeDeg = ConvertDMToDD($station.latitude[0],$station.latitude[1],'$station.latitude[2]');
 var longitudeDeg = ConvertDMToDD($station.longitude[0],$station.longitude[1],'$station.longitude[2]');
 
+// need an update on archive interval
+
+// need an update on MQTT interval
+
+// to do those updates maybe read archive observations from instead of using weewx generation?
+
 // day temperature values
 updateHTML('air_temperature', '$current.outTemp');
 updateHTML('air_temperature_min', '$day.outTemp.min');
@@ -23,50 +29,54 @@ owmurl="http://api.openweathermap.org/data/2.5/onecall?lat="+latitudeDeg+"&lon="
 async function getForecast() {
 const response = await fetch(owmurl);
 const forecastJson = await response.json(); //extract JSON from the http response
-forecast = forecastJson['hourly'];
+forecast = forecastJson['hourly'];  // extract the hourly forecast
 
-gap=2 // 2 hours interval
+gap=$Extras.fcInterval // interval, in hours, between forecasts, set in skin.conf extras section
 
+// loop through each of the 3 sets of forecasts allowed in the pane
 for(x=1;x<4;x++){
-if (x==1)
-	forecastNumber = x;
-else
-	forecastNumber = x * gap;
+  // an index to get the correct forecast from the API response
+  forecastNumber = 1+(x-1)*gap;
 
-var d = new Date(forecast[forecastNumber]['dt']*1000);
-sunTimes = SunCalc.getTimes(d, latitudeDeg, longitudeDeg);
+  // get the sunrise/sunset needed to calculate if the forecast time is during day time
+  var d = new Date(forecast[forecastNumber]['dt']*1000);
+  sunTimes = SunCalc.getTimes(d, latitudeDeg, longitudeDeg);
+  
+  // determine if time of forecast is day or night for icon
+  if((forecast[forecastNumber]['dt']*1000 > sunTimes.sunrise.getTime()) && (forecast[forecastNumber]['dt']*1000 < sunTimes.sunset.getTime()) )
+    owmtime='day';
+  else
+    owmtime='night';
 
-forecasthour = d.getHours();
- if (Number(forecasthour) > 12) {
+  // get the hour of the forecast and convert from 24hr to 12hr clock for the weather font clock icon
+  forecasthour = d.getHours();
+  if (Number(forecasthour) > 12) {
     forecastTime = Number(forecasthour) - 12;
-  } else if (Number(forecasthour) == 0) {
+    } 
+  else if (Number(forecasthour) == 0) {
     forecastTime = 12;
-  } else {
+    }
+  else {
     forecastTime = Number(forecasthour)
-  }
-
-// determine if time of forecast is day or night for icon
-if((forecast[forecastNumber]['dt']*1000 > sunTimes.sunrise.getTime()) && (forecast[forecastNumber]['dt']*1000 < sunTimes.sunset.getTime()) )
-	owmtime='day';
-else
-	owmtime='night';
+    }
 
 
-// Icons from https://erikflowers.github.io/weather-icons/
-updateHTML('forecast-hour-'+x+'-time',"<i class=\"wi wi-time-" + forecastTime + "\"></i>" );
-updateHTML('forecast-hour-'+x+'-icon',"<i class=\"wi wi-owm-"+owmtime+"-"+ forecast[forecastNumber]['weather'][0]['id'] + "\"></i><span class=\"tooltiptext\">"+forecast[forecastNumber]['weather'][0]['description']+"</span>");
-updateHTML('forecast-hour-'+x+'-temp',Math.round(forecast[forecastNumber]['temp']));
-updateHTML('forecast-hour-'+x+'-precip-percent',forecast[forecastNumber]['pop']);
-updateHTML('forecast-hour-'+x+'-wind-dir',"<i class=\"wi wi-wind from-" + forecast[forecastNumber]['wind_deg'] + "-deg\"></i>");
-updateHTML('forecast-hour-'+x+'-wind-spd',Math.round(forecast[forecastNumber]['wind_speed']*10)/10);
 
-
+  // Icons from https://erikflowers.github.io/weather-icons/  
+  updateHTML('forecast-hour-'+x+'-time',"<i class=\"wi wi-time-" + forecastTime + "\"></i>" );
+  updateHTML('forecast-hour-'+x+'-icon',"<i class=\"wi wi-owm-"+owmtime+"-"+ forecast[forecastNumber]['weather'][0]['id'] + "\"></i><span class=\"tooltiptext\">"+forecast[forecastNumber]['weather'][0]['description']+"</span>");
+  updateHTML('forecast-hour-'+x+'-temp',Math.round(forecast[forecastNumber]['temp']));
+  updateHTML('forecast-hour-'+x+'-precip-percent',forecast[forecastNumber]['pop']);
+  updateHTML('forecast-hour-'+x+'-wind-dir',"<i class=\"wi wi-wind from-" + forecast[forecastNumber]['wind_deg'] + "-deg\"></i>");
+  updateHTML('forecast-hour-'+x+'-wind-spd',Math.round(forecast[forecastNumber]['wind_speed']*10)/10);
 }
 
 }
 
+// call the function above to get and display the forecast
 getForecast();
 
+// convert lat and long to decimal from format that WeeWx outputs
 function ConvertDMToDD(degrees, minutes, direction) {
     var dd = degrees + minutes/60 ;
 
@@ -76,8 +86,10 @@ function ConvertDMToDD(degrees, minutes, direction) {
     return dd;
 }
 
+// update display with sunrise and sunset details
 
 populateSunRiseSet(latitudeDeg,longitudeDeg);
+
 function populateSunRiseSet(latitude, longitude) {
   today = new Date();
   tomorrow = new Date()
@@ -146,3 +158,205 @@ function pad(n, len) {
   return s;
 }
 
+
+// baro gauge
+
+initCanvas('barometer');
+drawRoundGaugeTwoNeedles('barometer', Math.round($current.barometer.raw),Math.round($hour($hours_ago=24).barometer.avg.raw), 160, 380, 950, 1050,'hPa');
+
+// round gauge with a single line of text (value+units)
+function drawRoundGaugeTwoNeedles(canvasID, value, valueTwo, minAngle = 270, maxAngle = 630, minValue = 0, maxValue = 360, units = '') {
+  let canvas = document.getElementById(canvasID);
+  //get context
+  let gauge = canvas.getContext('2d');
+  // get properties of canvas
+  width = Number(getComputedStyle(canvas).getPropertyValue("width").slice(0, -2));
+  height = Number(getComputedStyle(canvas).getPropertyValue("height").slice(0, -2));
+  // to find radius for gauge
+  if (width >= height) {
+    size = height;
+  } else {
+    size = width;
+  }
+
+  // clear canvas
+  gauge.clearRect(0, 0, width, height); // clear canvas
+
+  // adjust dimensions based on canvas dimensions
+  gauge.lineWidth = size * 0.04;
+  gaugeRadius = (-gauge.lineWidth - size * 0.1) + size / 2;
+  gaugeFontSize = size / 10;
+  gauge.font = gaugeFontSize + "px Arial";
+  needleBase = size * 0.04;
+  needleHeight = needleBase * 3.2;
+  needleTwoBase = needleBase*0.5;
+  needleTwoHeight = needleHeight * 0.5;
+
+  // set colours from CSS
+  gauge.fillStyle = "#bbbbbb";
+  gauge.strokeStyle = "#bbbbbb";
+
+  // print wind direction, speed and Beaufort description in centre of dial
+  gauge.textAlign = "center";
+
+  gauge.fillText(value + " " + units, width / 2, height / 2);
+
+  gauge.fillStyle = cssvar('--needle-colour');
+  gauge.strokeStyle = cssvar('--gauge-colour');
+
+  // draw dial
+  
+
+  gauge.translate(width / 2, height / 2); // translate resets (0,0) coords to centre of canvas
+  gauge.beginPath();
+  gauge.arc(0, 0, gaugeRadius, minAngle * Math.PI / 180, maxAngle * Math.PI / 180);
+  // x=0,y=0,radius,start angle 0= 3 o'clock, end angle, <direction>
+  gauge.stroke();
+
+  // draw needle
+  gauge.beginPath();
+  needleAngle = (maxAngle - minAngle) * (value - minValue) / (maxValue - minValue);
+
+  gauge.rotate(-(270 - minAngle) * Math.PI / 180); // how does this work. Rotates to start angle?
+  gauge.rotate(needleAngle * Math.PI / 180); //rotate to draw at current deg value
+  gauge.translate(0, -gaugeRadius - gauge.lineWidth / 2); // move to radius new 0,0
+  gauge.lineTo(needleBase, 0); // draw half of base line
+  gauge.lineTo(0, needleHeight); // draw to point
+  gauge.lineTo(-needleBase, 0); // draw back to other end of base line
+  gauge.fill(); // close fill triangle
+  gauge.translate(0, gaugeRadius + gauge.lineWidth / 2); // move back to centre of canvas
+
+gauge.rotate(-needleAngle * Math.PI / 180); //rotate back to start angle
+gauge.rotate((270 - minAngle) * Math.PI / 180); // rotate back from start angle to beginning
+
+  gauge.fillStyle = cssvar('--needle-old-colour');
+  
+  // needleTwo
+  gauge.beginPath();
+  needleAngle = (maxAngle - minAngle) * (valueTwo - minValue) / (maxValue - minValue);
+  gauge.rotate(-(270 - minAngle) * Math.PI / 180);
+
+  gauge.rotate(needleAngle * Math.PI / 180); //rotate to draw at current deg value
+  gauge.translate(0, -gaugeRadius - gauge.lineWidth / 2); // move to radius
+  gauge.lineTo(needleTwoBase, 0); // draw half of base line
+  gauge.lineTo(0, needleTwoHeight); // draw to point
+  gauge.lineTo(-needleTwoBase, 0); // draw back to other end of base line
+  gauge.fill(); // close fill triangle
+
+  gauge.translate(0, gaugeRadius + gauge.lineWidth / 2); // move back to centre of canvas
+
+  gauge.rotate(-needleAngle * Math.PI / 180); //rotate back
+  gauge.rotate((270 - minAngle) * Math.PI / 180);
+  gauge.translate(-width / 2, -height / 2); // move back to (0,0) ready for next animation
+
+}
+
+// round gauge with a single line of text (value+units)
+function drawRoundGauge(canvasID, value, minAngle = 270, maxAngle = 630, minValue = 0, maxValue = 360, units = '') {
+  let canvas = document.getElementById(canvasID);
+  //get context
+  let gauge = canvas.getContext('2d');
+  // get properties of canvas
+  width = Number(getComputedStyle(canvas).getPropertyValue("width").slice(0, -2));
+  height = Number(getComputedStyle(canvas).getPropertyValue("height").slice(0, -2));
+
+  // to find radius for gauge
+  if (width >= height) {
+    size = height;
+  } else {
+    size = width;
+  }
+  // clear canvas
+  gauge.clearRect(0, 0, width, height); // clear canvas
+
+  // adjust dimensions based on canvas dimensions
+  gauge.lineWidth = size * 0.04;
+  gaugeRadius = (-gauge.lineWidth - size * 0.1) + size / 2;
+  gaugeFontSize = size / 10;
+  gauge.font = gaugeFontSize + "px Arial";
+  needleBase = size * 0.04;
+  needleHeight = needleBase * 3.2;
+
+  // set colours from CSS
+  gauge.fillStyle = "#bbbbbb";
+  gauge.strokeStyle = "#bbbbbb";
+
+  // print wind direction, speed and Beaufort description in centre of dial
+  gauge.textAlign = "center";
+
+  gauge.fillText(value + " " + units, width / 2, height / 2);
+
+  gauge.fillStyle = cssvar('--needle-colour');
+  gauge.strokeStyle = cssvar('--gauge-colour');
+
+  // draw dial
+  gauge.beginPath();
+
+  gauge.translate(width / 2, height / 2);
+
+  gauge.arc(0, 0, gaugeRadius, minAngle * Math.PI / 180, maxAngle * Math.PI / 180);
+  // x=0,y=0,radius,start angle 0= 3 o'clock, end angle, <direction>
+  gauge.stroke();
+
+  // draw needle
+  gauge.beginPath();
+
+
+
+  needleAngle = (maxAngle - minAngle) * (value - minValue) / (maxValue - minValue);
+
+
+  gauge.rotate(-(270 - minAngle) * Math.PI / 180);
+
+  gauge.rotate(needleAngle * Math.PI / 180); //rotate to draw at current deg value
+  gauge.translate(0, -gaugeRadius - gauge.lineWidth / 2); // move to radius
+  gauge.lineTo(needleBase, 0); // draw half of base line
+  gauge.lineTo(0, needleHeight); // draw to point
+  gauge.lineTo(-needleBase, 0); // draw back to other end of base line
+  gauge.fill(); // close fill triangle
+
+  gauge.translate(0, gaugeRadius + gauge.lineWidth / 2); // move back to centre of canvas
+
+  gauge.rotate(-needleAngle * Math.PI / 180); //rotate back
+  gauge.rotate((270 - minAngle) * Math.PI / 180);
+  gauge.translate(-width / 2, -height / 2); // move back to (0,0) ready for next animation
+
+}
+
+// initialise canvas to size of parent
+async function initCanvas(canvasID) {
+
+  //get canvas
+  let canvas = document.getElementById(canvasID);
+
+  //get context
+  let ctx = canvas.getContext('2d');
+
+  function parentWidth(elem) {
+    return elem.parentElement.clientWidth;
+  }
+
+  function parentHeight(elem) {
+    return elem.parentElement.clientHeight;
+  }
+
+  // gets width and height of parent and sets canvas to match
+  parentWidth = parentWidth(document.getElementById(canvasID));
+  parentHeight = parentHeight(document.getElementById(canvasID));
+  canvasWidth = parentWidth;
+  canvasHeight = parentHeight;
+
+  // scale canvas to match screen for sharpness
+  scale = window.devicePixelRatio;
+  canvas.style.width = canvasWidth + "px";
+  canvas.style.height = canvasHeight + "px";
+  canvas.width = canvasWidth * scale;
+  canvas.height = canvasHeight * scale;
+  ctx.scale(scale, scale);
+  // now that canvas is initialised it can be drawn on
+}
+
+// utility function to fetch the variables from the CSS
+function cssvar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name);
+}
