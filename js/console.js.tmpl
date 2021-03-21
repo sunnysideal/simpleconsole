@@ -15,9 +15,9 @@ updateHTML('air_temperature_max_time', '$day.outTemp.maxTime.format("%H:%M")');
 updateHTML('obs_date', '$current.dateTime.format("%a %d %b")');
 updateHTML('obs_time', '$current.dateTime.format("%H:%M")');
 
-// forecast from openweathermap
-owmkey="9781439a8ae8c57f5cd54cf33e9eb174";
-units="metric";
+// get and update hourly forecast from openweathermap
+owmkey="$Extras.owmkey";
+units="$Extras.consoleunits";
 owmurl="http://api.openweathermap.org/data/2.5/onecall?lat="+latitudeDeg+"&lon="+longitudeDeg+"&exclude=current,minutely,daily&units="+units+"&appid="+owmkey;
 
 async function getForecast() {
@@ -25,12 +25,17 @@ const response = await fetch(owmurl);
 const forecastJson = await response.json(); //extract JSON from the http response
 forecast = forecastJson['hourly'];
 
-gap=2
+gap=2 // 2 hours interval
+
 for(x=1;x<4;x++){
+if (x==1)
+	forecastNumber = x;
+else
+	forecastNumber = x * gap;
 
-let sunTimes = SunCalc.getTimes(today, latitudeDeg, longitudeDeg);
+var d = new Date(forecast[forecastNumber]['dt']*1000);
+sunTimes = SunCalc.getTimes(d, latitudeDeg, longitudeDeg);
 
-var d = new Date(forecast[x*gap]['dt']*1000);
 forecasthour = d.getHours();
  if (Number(forecasthour) > 12) {
     forecastTime = Number(forecasthour) - 12;
@@ -40,18 +45,20 @@ forecasthour = d.getHours();
     forecastTime = Number(forecasthour)
   }
 
-if(forecast[x*gap]['dt'] > sunTimes.sunrise.getTime() && forecast[x*gap]['dt'] < sunTimes.sunset.getTime() )
+// determine if time of forecast is day or night for icon
+if((forecast[forecastNumber]['dt']*1000 > sunTimes.sunrise.getTime()) && (forecast[forecastNumber]['dt']*1000 < sunTimes.sunset.getTime()) )
 	owmtime='day';
 else
 	owmtime='night';
 
-//updateHTML('forecast-hour-'+x+'-time',d.getHours() );
+
+// Icons from https://erikflowers.github.io/weather-icons/
 updateHTML('forecast-hour-'+x+'-time',"<i class=\"wi wi-time-" + forecastTime + "\"></i>" );
-updateHTML('forecast-hour-'+x+'-icon',"<i class=\"wi wi-owm-"+owmtime+"-"+ forecast[x*gap]['weather'][0]['id'] + "\"></i>");
-updateHTML('forecast-hour-'+x+'-temp',Math.round(forecast[x*gap]['temp']));
-updateHTML('forecast-hour-'+x+'-precip-percent',forecast[x*gap]['pop']);
-updateHTML('forecast-hour-'+x+'-wind-dir',"<i class=\"wi wi-wind from-" + forecast[x*gap]['wind_deg'] + "-deg\"></i>");
-updateHTML('forecast-hour-'+x+'-wind-spd',Math.round(forecast[x*gap]['wind_speed']*10)/10);
+updateHTML('forecast-hour-'+x+'-icon',"<i class=\"wi wi-owm-"+owmtime+"-"+ forecast[forecastNumber]['weather'][0]['id'] + "\"></i><span class=\"tooltiptext\">"+forecast[forecastNumber]['weather'][0]['description']+"</span>");
+updateHTML('forecast-hour-'+x+'-temp',Math.round(forecast[forecastNumber]['temp']));
+updateHTML('forecast-hour-'+x+'-precip-percent',forecast[forecastNumber]['pop']);
+updateHTML('forecast-hour-'+x+'-wind-dir',"<i class=\"wi wi-wind from-" + forecast[forecastNumber]['wind_deg'] + "-deg\"></i>");
+updateHTML('forecast-hour-'+x+'-wind-spd',Math.round(forecast[forecastNumber]['wind_speed']*10)/10);
 
 
 }
