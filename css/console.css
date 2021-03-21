@@ -6,8 +6,9 @@
 	--titles-colour: #FFFFFF;
 	--page-background-colour: #222222;
 	--observation-background-colour: #242424;
-	--wind-needle-colour: #FF5555;
-	--wind-gauge-colour: #0077bb;
+	--needle-colour: #FF5555;
+	--needle-old-colour: #AA5555;
+	--gauge-colour: #0077bb;
 }
 
 *{
