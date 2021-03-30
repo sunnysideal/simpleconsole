@@ -195,8 +195,8 @@ function drawRoundGaugeTwoNeedles(canvasID, value, valueTwo, minAngle = 270, max
   gauge.font = gaugeFontSize + "px Arial";
   needleBase = size * 0.04;
   needleHeight = needleBase * 3.2;
-  needleTwoBase = needleBase*0.5;
-  needleTwoHeight = needleHeight * 0.5;
+  needleTwoBase = needleBase*0.7;
+  needleTwoHeight = needleHeight * 0.7;
 
   // get sagitta (height) of arc
   sagitta = gaugeRadius*(1-Math.cos(0.5*((maxAngle-minAngle)*Math.PI/180)));

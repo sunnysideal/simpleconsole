@@ -6,8 +6,8 @@
 },
 
 "current":
-  {"obs_date":"$current.dateTime.format("%a %d %b")","obs_time":"$current.dateTime.format("%H:%M")","air_temperature":"$current.outTemp","air_temperature_min":"$day.outTemp.min","air_temperature_min_time":"$day.outTemp.minTime.raw",
-                                        "air_temperature_max":"$day.outTemp.max","air_temperature_max_time":"$day.outTemp.maxTime.raw",
+  {"obs_date":"$current.dateTime.format("%a %d %b")","obs_time":"$current.dateTime.format("%H:%M")","air_temperature":"$current.outTemp","air_temperature_min":"$day.outTemp.min","air_temperature_min_time":"$day.outTemp.minTime.format("%H:%M")",
+                                        "air_temperature_max":"$day.outTemp.max","air_temperature_max_time":"$day.outTemp.maxTime.format("%H:%M")",
 "barometer":"$current.barometer.raw","barometer_day_ago":"$hour($hours_ago=24).barometer.avg.raw"
 }
 
