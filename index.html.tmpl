@@ -14,7 +14,6 @@
 </head>
 
 <body>
-<script src="js/suncalc.js" type='text/javascript'></script>
 	<!-- to resize canvas and redraw gauges -->
 
 	<div id="console" class="console-container">
@@ -87,7 +86,7 @@
 
 
 
-		<div class="grid-mm">
+		<div class="grid-ml">
 			<div class="rain-container container">
 
 				<div>Rain Today: <span class='precip_accum_local_day'></span> <span class="units_precip"></span></div>
@@ -100,8 +99,9 @@
 
 
 
-		<div class="grid-ml">
+		<div class="grid-mm">
 			<div class="solar-container container">
+			  <div class="sun-chart-div"><canvas id="sun-chart"></canvas></div>
 				<div class="sunrise-image"><i class="wi wi-sunrise"></i></div>
 				<div class="sunset-image"><i class="wi wi-sunset"></i></div>
 				<div class="solarnoon-image"><i class="wi wi-day-sunny"></i></div>
@@ -153,7 +153,7 @@
 		</div>
 
 	</div>
-	
+
 <script src="js/console.js" type='text/javascript'></script>
 </body>
 
