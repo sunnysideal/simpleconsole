@@ -89,7 +89,7 @@ body, html {
 }
 
 .date-container {
-	
+
 	width: 100%;
 	height: 100%;
 	display:table;
@@ -276,7 +276,7 @@ font-size:60%;
 .illuminance-value {font-size:60%;grid-area: illuminance;text-align:center;}
 .uv-value {font-size:60%;grid-area: uv;text-align:center;}
 .solar-radiation {font-size:60%;grid-area: radiation;text-align:center;}
-
+.sun-chart-div {grid-area:chart-sun;}
 
 
 
@@ -285,7 +285,7 @@ font-size:60%;
 	position:relative;
 
 	grid-template-areas:
-
+"chart-sun chart-sun chart-sun"
 			"image-rise image-noon image-set"
 
             "today-time-rise today-time-noon today-time-set"
@@ -296,7 +296,7 @@ font-size:60%;
 						"title-illuminance title-uv title-solar-radiation"
 						"illuminance uv radiation";
 	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
-	grid-template-rows: minmax(0, 0.7fr) auto  minmax(0, 0.4fr) minmax(0, 0.4fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+	grid-template-rows: minmax(0, 1.5fr) minmax(0, 0.7fr) auto  minmax(0, 0.4fr) minmax(0, 0.4fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
 }
 
 .grid-tl {grid-area: top-left;background-color:var(--observation-background-colour);}
