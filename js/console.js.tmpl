@@ -1,5 +1,7 @@
 // to be main launch point of console if all requirements are met
- // properties for the wind needle
+ 
+ 
+// properties for the wind needle
 var needle = {
   base: 15,
   height: 33,
@@ -25,7 +27,7 @@ var needle = {
   // Update all current readings by iterating through all current value keys
   Object.keys(data.current).forEach(item => updateHTML(item,data.current[item]));
 
-  updateHTML('beaufort_description',beaufortWindForceScale[Number(beaufort(data.current.wind_avg))]['Description']);
+  updateHTML('beaufort_description',(Number(beaufort(data.current.wind_avg))+1)+ ' : '+beaufortWindForceScale[Number(beaufort(data.current.wind_avg))]['Description']);
    
   
   // station lat/lon values for solar stats calculator
@@ -239,9 +241,9 @@ function drawRoundGaugeTwoNeedles(canvasID, value, valueTwo, minAngle = 270, max
 
 
 
-  // set colours from CSS
-  gauge.fillStyle = "#bbbbbb";
-  gauge.strokeStyle = "#bbbbbb";
+  // set colours from CSS for text
+  gauge.fillStyle = cssvar('--page-text-colour');
+  gauge.strokeStyle = cssvar('--page-text-colour');
 
 
 
@@ -716,6 +718,7 @@ function drawWind(needle) {
 
   // adjust dimensions based on canvas dimensions
   wind.lineWidth = size * 0.04;
+  arcWidth = wind.lineWidth;
   gaugeRadius = (-wind.lineWidth - size * 0.1) + size / 2;
   windFontSize = size / 10;
   wind.font = windFontSize + "px Arial";
@@ -723,36 +726,138 @@ function drawWind(needle) {
   needle.height = needle.base * 3.2;
 
   // set colours from CSS
-  wind.fillStyle = cssvar('--page-text-colour');
-  wind.strokeStyle = cssvar('--wind-gauge-colour');
+  //wind.fillStyle = cssvar('--page-text-colour');
+  //wind.strokeStyle = cssvar('--wind-gauge-colour');
+  wind.fillStyle = '#000000';
+  wind.strokeStyle = '#000000';
 
-  // print wind direction, speed and Beaufort description in centre of dial
-  wind.textAlign = "center";
-  wind.fillText(needle.targetCardinal, width / 2, -0.2 * windFontSize + height / 2);
-  wind.fillText(Math.round(needle.windSpeed * 10) / 10 , width / 2, 0.8 * windFontSize + height / 2);
-  //wind.fillText(needle.bfDesc,width/2,1.3*windFontSize+height/2);
+
 
   // draw dial
   wind.beginPath();
-  wind.fillStyle = cssvar('--wind-needle-colour');
+  //wind.fillStyle = cssvar('--wind-needle-colour');
   wind.strokeStyle = cssvar('--wind-gauge-colour');
   wind.translate(width / 2, height / 2);
   wind.arc(0, 0, gaugeRadius, 0, Math.PI * 2); //draw outer arc
   wind.stroke();
 
   // draw needle
+  wind.lineWidth = size * 0.007;
   wind.beginPath();
   wind.rotate(needle.degrees * Math.PI / 180); //rotate to draw at current deg value
-  wind.translate(0, -gaugeRadius - wind.lineWidth / 2); // move to radius
-  wind.lineTo(needle.base, 0); // draw half of base line
-  wind.lineTo(0, needle.height); // draw to point
-  wind.lineTo(-needle.base, 0); // draw back to other end of base line
-  wind.fill(); // close fill triangle
+  wind.translate(0, -gaugeRadius - arcWidth/2); // move to radius
+  wind.moveTo(0,0);
+  
+  wind.strokeStyle = cssvar('--bws-'+ beaufort(needle.windSpeed));
+  wind.fillStyle = wind.strokeStyle;
+  /*
+  if(beaufort(needle.windSpeed) == 0){
+	  // outline only
+	//  wind.strokeStyle = '#333333';
+	 // wind.fillStyle = wind.strokeStyle;
+	  
+	  wind.lineTo(needle.base, -arcWidth); // draw half of base line
+      wind.lineTo(0, needle.height); // draw to point
+      wind.lineTo(-needle.base, -arcWidth); // draw back to other end of base line
 
-  wind.translate(0, gaugeRadius + wind.lineWidth / 2); // move back to centre of canvas
+      wind.closePath(); // close line triangle
+	  wind.stroke();
+	  console.log("BWS0");
+	  
+  }
+  else if (beaufort(needle.windSpeed) == 1){
+	   
+	//		  wind.strokeStyle = '#555555';
+	//  wind.fillStyle = wind.strokeStyle;
+      wind.lineTo(needle.base, -arcWidth); // draw half of base line
+      wind.lineTo(0, needle.height); // draw to point
+      wind.lineTo(-needle.base, -arcWidth); // draw back to other end of base line
+
+      wind.closePath(); // close line triangle
+	  wind.stroke();
+	  console.log("BWS1");
+	  
+	  
+  }
+   else if (beaufort(needle.windSpeed) == 2){
+
+	  //wind.strokeStyle = '#555555';
+	  //wind.fillStyle = wind.strokeStyle;
+      wind.lineTo(needle.base, -arcWidth); // draw half of base line
+      wind.lineTo(0, needle.height); // draw to point
+      wind.lineTo(-needle.base, -arcWidth); // draw back to other end of base line
+
+      wind.closePath(); // close line triangle
+	  wind.stroke();
+	  
+	  // fill half if BWS = 2
+	  wind.beginPath();
+	  wind.moveTo(0,0);
+	  wind.lineTo(0,needle.height);
+	  wind.lineTo(-needle.base,-arcWidth);
+	  wind.fill();
+	 
+
+	 
+
+	  console.log("BWS2");
+   }
+      else if (beaufort(needle.windSpeed) == 3){
+
+	  //wind.strokeStyle = '#555555';
+	  //wind.fillStyle = wind.strokeStyle;
+      wind.lineTo(needle.base, -arcWidth); // draw half of base line
+      wind.lineTo(0, needle.height); // draw to point
+      wind.lineTo(-needle.base, -arcWidth); // draw back to other end of base line
+
+      wind.closePath(); // close line triangle
+	  wind.stroke();
+	  
+	  // fill all if BWS = 3
+	  wind.beginPath();
+	  wind.moveTo(0,0);
+      wind.lineTo(needle.base, -arcWidth); // draw half of base line
+      wind.lineTo(0, needle.height); // draw to point
+      wind.lineTo(-needle.base, -arcWidth); // draw back to other end of base line
+	  wind.fill();
+	 
+
+	 
+
+	  console.log("BWS3");
+   }
+  else{
+  */
+
+  //wind.strokeStyle = '#BBBBBB';  
+  //wind.fillStyle = wind.strokeStyle;
+  wind.lineTo(needle.base, -arcWidth); // draw half of base line
+      wind.lineTo(0, needle.height); // draw to point
+      wind.lineTo(-needle.base, -arcWidth); // draw back to other end of base line
+
+      wind.closePath(); // close line triangle
+	  wind.stroke();
+	  
+	  // fill all if BWS = 3
+	  wind.beginPath();
+	  wind.moveTo(0,0);
+      wind.lineTo(needle.base, -arcWidth); // draw half of base line
+      wind.lineTo(0, needle.height); // draw to point
+      wind.lineTo(-needle.base, -arcWidth); // draw back to other end of base line
+	  wind.fill();
+  
+  
+    wind.translate(0, gaugeRadius + arcWidth/2); // move back to centre of canvas
+  //wind.translate(0, gaugeRadius + wind.lineWidth / 2); // move back to centre of canvas
   wind.rotate(-needle.degrees * Math.PI / 180); //rotate back to beginning
   wind.translate(-width / 2, -height / 2); // move back to (0,0) ready for next animation
-
+    // print wind direction, speed and Beaufort description in centre of dial
+  wind.textAlign = "center";
+  wind.fillText(needle.targetCardinal, width / 2, -0.2 * windFontSize + height / 2);
+  wind.fillText(Math.round(needle.windSpeed * 10) / 10 , width / 2, 0.8 * windFontSize + height / 2);
+  //wind.fillText(needle.bfDesc,width/2,1.3*windFontSize+height/2);
+  
+  //}
 }
 
 // updates values in needle then draws and will animate until target angle is met
