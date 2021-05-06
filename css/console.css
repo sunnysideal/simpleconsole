@@ -130,7 +130,7 @@ font-size:60%;
 .feels-like-title, .feels-like {font-size:70%;}
 
 .air-temperature-title { grid-area: title;text-align:center;}
-.air-temperature { font-size: 300%;grid-area: deg; text-align:center;}
+.air-temperature { font-size: 300%;grid-area: deg; text-align:center;align-self:center;}
 .feels-like-title {grid-area: feels-title; text-align:center;align-self:end;}
 .feels-like {grid-area: feels; text-align:center;}
 .air-temperature-min { grid-area: min;   text-align:center;align-self:end;}
@@ -143,15 +143,17 @@ font-size:60%;
 	position:relative;
 
 	grid-template-columns: repeat(12,1fr);
-	grid-template-rows: minmax(0, 3fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+	grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 3fr) minmax(0, 1fr) minmax(0, 1fr);
 		grid-template-areas:
-
+			". . . . . max max . . . . ."
+            ". . . . . max-time max-time . . . . . "
 			" deg deg deg deg deg deg deg deg deg deg deg deg"
-			" feels-title feels-title  feels-title feels-title feels-title feels-title feels-title feels-title feels-title feels-title feels-title feels-title "
-			" feels feels feels feels feels feels feels feels feels feels feels feels"
-			". . min min min . . max max max . ."
+/*			" feels-title feels-title  feels-title feels-title feels-title feels-title feels-title feels-title feels-title feels-title feels-title feels-title "
 
-            ". . min-time min-time min-time . . max-time max-time max-time . . ";
+			" feels feels feels feels feels feels feels feels feels feels feels feels"
+*/            " . . . . . min min . . . . ."
+			" . . . . . min-time min-time . . . . ."
+;
 }
 
 .wind-beaufort {grid-area:2;text-align:center;align-self:center;}
@@ -270,10 +272,8 @@ font-size:60%;
 .solar-tomorrow-title {font-size:50%;grid-area:tomorrow-title;text-align:center;align-self: end;}
 .solar-tomorrow-text {font-size:65%;grid-area:tomorrow-text;text-align:center;align-self: center;}
 
-.illuminance-title {font-size:60%;grid-area: title-illuminance;text-align:center;align-self: end;}
 .uv-title {font-size:60%;grid-area: title-uv;text-align:center;align-self: end;}
 .solar-radiation-title {font-size:60%;grid-area: title-solar-radiation;text-align:center;align-self: end;}
-.illuminance-value {font-size:60%;grid-area: illuminance;text-align:center;}
 .uv-value {font-size:60%;grid-area: uv;text-align:center;}
 .solar-radiation {font-size:60%;grid-area: radiation;text-align:center;}
 .sun-chart-div {grid-area:chart-sun;}
@@ -293,10 +293,10 @@ font-size:60%;
 						"tomorrow-title tomorrow-title tomorrow-title "
 						"tomorrow-time-rise tomorrow-time-noon tomorrow-time-set"
 						"tomorrow-text tomorrow-text tomorrow-text "
-						"title-illuminance title-uv title-solar-radiation"
-						"illuminance uv radiation";
+						"title-uv . title-solar-radiation"
+						"uv . radiation";
 	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
-	grid-template-rows: minmax(0, 1.5fr) minmax(0, 0.7fr) auto  minmax(0, 0.4fr) minmax(0, 0.4fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+	grid-template-rows: minmax(0, 1.5fr) minmax(0, 1fr) auto  minmax(0, 0.4fr) minmax(0, 0.4fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
 }
 
 .grid-tl {grid-area: top-left;background-color:var(--observation-background-colour);}
