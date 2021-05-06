@@ -6,9 +6,15 @@
 },
 
 "current":
-  {"obs_date":"$current.dateTime.format("%a %d %b")","obs_time":"$current.dateTime.format("%H:%M")","air_temperature":"$current.outTemp","air_temperature_min":"$day.outTemp.min","air_temperature_min_time":"$day.outTemp.minTime.format("%H:%M")",
+  {"obs_date":"$current.dateTime.format("%a %d %b")","obs_time":"$current.dateTime.format("%H:%M")","air_temperature":"$current.outTemp.format(add_label=False)","air_temperature_min":"$day.outTemp.min","air_temperature_min_time":"$day.outTemp.minTime.format("%H:%M")",
                                         "air_temperature_max":"$day.outTemp.max","air_temperature_max_time":"$day.outTemp.maxTime.format("%H:%M")",
-"barometer":"$current.barometer.raw","barometer_day_ago":"$hour($hours_ago=24).barometer.avg.raw"
+"barometer":"$current.barometer.format(add_label=False)","barometer_day_ago":"$hour($hours_ago=24).barometer.avg.format(add_label=False)",
+"wind_avg":"$span($time_delta=900).windSpeed.avg.format(add_label=False)",
+"wind_gust":"$current.windGust.format(add_label=False)",
+"uv":"$current.UV",
+"solar_radiation":"$current.radiation",
+	"temperature_unit":"$unit.label.outTemp",
+	"wind_unit":"$unit.label.windSpeed"
 }
 
 }

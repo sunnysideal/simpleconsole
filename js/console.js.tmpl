@@ -1,4 +1,17 @@
 // to be main launch point of console if all requirements are met
+ // properties for the wind needle
+var needle = {
+  base: 15,
+  height: 33,
+  degrees: 0,
+  targetDegrees: 0,
+  targetCardinal: "---",
+  windSpeed: 0,
+  moving: 0,
+  direction: 1,
+  speed: 3,
+  bfDesc: ""
+}
 
   //load scripts in order, waiting to make sure data has arrived
   loadScript('js/suncalc.js')
@@ -7,19 +20,27 @@
     .then(() => loadJSON("js/data.json", function(text){
   data = JSON.parse(text);
 
+  
+  
   // Update all current readings by iterating through all current value keys
   Object.keys(data.current).forEach(item => updateHTML(item,data.current[item]));
 
+  updateHTML('beaufort_description',beaufortWindForceScale[Number(beaufort(data.current.wind_avg))]['Description']);
+   
+  
   // station lat/lon values for solar stats calculator
   var latitudeDeg = ConvertDMToDD(Number(data.config.latitude_deg),Number(data.config.latitude_minutes),data.config.latitude_heading);
   var longitudeDeg = ConvertDMToDD(Number(data.config.longitude_deg),Number(data.config.longitude_minutes),data.config.longitude_heading);
 
+  
+ 
   // get and display the forecast from OpenWeatherMap
   getForecast(latitudeDeg,longitudeDeg,data.config.owmkey,data.config.consoleunits,Number(data.config.gap));
 
   // calc and display sunrise and sunset details
   populateSunRiseSet(latitudeDeg,longitudeDeg);
-
+initCanvas('wind');
+drawWind(needle);
   // baro gauge
   initCanvas('barometer-gauge');
   drawRoundGaugeTwoNeedles('barometer-gauge', Math.round(data.current.barometer),Math.round(data.current.barometer_day_ago), 160, 380, 950, 1050,'hPa');
@@ -94,7 +115,7 @@ async function getForecast(latitudeDeg,longitudeDeg,owmkey,units,gap) {
     updateHTML('forecast-hour-'+x+'-time',"<i class=\"wi wi-time-" + forecastTime + "\"></i>" );
     updateHTML('forecast-hour-'+x+'-icon',"<i class=\"wi wi-owm-"+owmtime+"-"+ forecast[forecastNumber]['weather'][0]['id'] + "\"></i><span class=\"tooltiptext\">"+forecast[forecastNumber]['weather'][0]['description']+"</span>");
     updateHTML('forecast-hour-'+x+'-temp',Math.round(forecast[forecastNumber]['temp']));
-    updateHTML('forecast-hour-'+x+'-precip-percent',forecast[forecastNumber]['pop']);
+    updateHTML('forecast-hour-'+x+'-precip-percent',Math.round(100*forecast[forecastNumber]['pop']));
     updateHTML('forecast-hour-'+x+'-wind-dir',"<i class=\"wi wi-wind from-" + forecast[forecastNumber]['wind_deg'] + "-deg\"></i>");
     updateHTML('forecast-hour-'+x+'-wind-spd',Math.round(forecast[forecastNumber]['wind_speed']*10)/10);
   }
@@ -407,8 +428,8 @@ function startConnect() {
     clientID = "clientID-" + parseInt(Math.random() * 100);
 
     // Fetch the hostname/IP address and port number from the form
-    host = "test.mosquitto.org";
-    port = "8080";
+    host = "broker.hivemq.com";
+    port = "8000";
 
     // Print output for the user in the messages div
     console.log( 'Connecting to: ', host ,' on port: ', port );
@@ -455,8 +476,26 @@ function onMessageArrived(message) {
 // html5 canvas for sun transit?
 
 mqttData = JSON.parse(message.payloadString);
-updateHTML('air_temperature',Math.round(10*mqttData.outTemp_C)/10);
+updateHTML('air_temperature',(Math.round(10*mqttData.outTemp_C)/10).toFixed(1));
 updateHTML('obs_time',getHumanTimeHHMM(mqttData.dateTime));
+updateHTML('wind_gust',(Math.round(10*mqttData.windGust_mps)/10).toFixed(1));
+updateHTML('wind_speed',(Math.round(10*mqttData.windSpeed_mps)/10).toFixed(1));
+updateHTML('solar_radiation',Math.round(mqttData.radiation_Wpm2));
+updateHTML('uv',Math.round(mqttData.UV));
+
+
+needle.windSpeed = mqttData.windSpeed_mps;
+console.log("mqtt spd: ",mqttData.windSpeed_mps," degrees: ",mqttData.windDir);
+
+if(Number(mqttData.windSpeed_mps) != 0){
+	needle.targetDegrees=mqttData.windDir;
+	needle.targetCardinal = cardinal(needle.targetDegrees);
+	console.log("Wind update");
+}
+
+rotateWindNeedle();
+
+
 }
 
 // Called when the disconnection button is pressed
@@ -490,7 +529,7 @@ function drawSun(canvasID, sunTimes) {
   gauge.lineWidth = width * 0.001;
 
   // set colours
-  gauge.fillStyle = "#bbbbbb";
+  gauge.fillStyle = "#FFA500";
   gauge.strokeStyle = "#FFA500";
 
   // draw dial
@@ -499,14 +538,14 @@ function drawSun(canvasID, sunTimes) {
 
   gauge.beginPath();
 
-   gauge.moveTo(width*0.05, height*0.95);  // start point left side of canvas
+   gauge.moveTo(10, height-10);  // start point left side of canvas
    gauge.quadraticCurveTo(
-       width/4, height*0.05,     // controls point sets slope out from start and into center
-       width/2,height*0.05              // center point
+       width/4, 10,     // controls point sets slope out from start and into center
+       width/2,10              // center point
    );
    gauge.quadraticCurveTo(
-       3*width/4, height*0.05,     // control point sets slope out from center and into last point
-       width*0.95, height *0.95          // last point
+       3*width/4, 10,     // control point sets slope out from center and into last point
+       width-10, height -10          // last point
    );
 
   gauge.stroke();
@@ -518,16 +557,17 @@ function drawSun(canvasID, sunTimes) {
   gauge.setLineDash([]);
   gauge.lineWidth = width * 0.003;
   gauge.strokeStyle = "#FFD700";
+  gauge.fillStyle = "#FFD700";
   timeOfDay="dark";
   console.log(currentTime.getTime() - sunrise);
   console.log(currentTime.getTime() - transit);
   console.log(sunrise," ",currentTime.getTime(), " ",transit," ",sunset);
-if(currentTime.getTime() > sunrise && currentTime.getTime() < transit){
+if(currentTime.getTime() > sunrise && currentTime.getTime() <= transit){
 
   timeOfDay = "am";
   percentage = (currentTime - sunrise)/(transit-sunrise);
   console.log("am ",percentage);
-  coords = getQuadraticXY(percentage, width*0.05, height*0.95,width/4, height*0.05, width/2,height*0.05);
+  coords = getQuadraticXY(percentage, 10, height-10,width/4, 10, width/2,10);
 }
 else if (currentTime>transit && currentTime < sunset){
 
@@ -535,7 +575,7 @@ else if (currentTime>transit && currentTime < sunset){
   percentage = (currentTime - transit)/(sunset-transit);
 
 
-  coords = getQuadraticXY(percentage, width/2,height*0.05,3*width/4, height*0.05, width*0.95, height *0.95 );
+  coords = getQuadraticXY(percentage,width/2,10,3*width/4, 10, width-10, height -10 );
 }
 if(timeOfDay != "dark"){
 
@@ -551,7 +591,7 @@ gauge.fill();
 // reset (0,0) to centre of 'sun'
 gauge.translate(pointX,pointY);
 for(var y=0;y<8;y++){
-  gauge.moveTo(0,5);
+  gauge.moveTo(0,6);
   gauge.lineTo(0,9);
   gauge.stroke();
   gauge.rotate(Math.PI/4);
@@ -566,3 +606,219 @@ function getQuadraticXY(t, sx, sy, cp1x, cp1y, ex, ey) {
     y: (1-t) * (1-t) * sy + 2 * (1-t) * t * cp1y + t * t * ey
   };
 }
+
+
+// Beaufort Wind Force Scale based on data at https://www.rmets.org/resource/beaufort-scale
+function beaufort(mps) {
+  kph = mps * 3.6;
+  if (kph < 1)
+    return 0;
+  else if (kph < 6)
+    return 1;
+  else if (kph < 12)
+    return 2;
+  else if (kph < 20)
+    return 3;
+  else if (kph < 29)
+    return 4;
+  else if (kph < 38)
+    return 5;
+  else if (kph < 50)
+    return 6;
+  else if (kph < 62)
+    return 7;
+  else if (kph < 75)
+    return 8;
+  else if (kph < 89)
+    return 9;
+  else if (kph < 103)
+    return 10;
+  else if (kph < 118)
+    return 11;
+  else
+    return 12;
+}
+
+
+beaufortWindForceScale = [{
+    Description: 'Calm',
+    Specification: 'Smoke rises vertically'
+  },
+  {
+    Description: 'Light Air',
+    Specification: 'Direction shown by smoke drift but not by wind vanes'
+  },
+  {
+    Description: 'Light Breeze',
+    Specification: 'Wind felt on face; leaves rustle; wind vane moved by wind'
+  },
+  {
+    Description: 'Gentle Breeze',
+    Specification: 'Leaves and small twigs in constant motion; light flags extended'
+  },
+  {
+    Description: 'Moderate Breeze',
+    Specification: 'Raises dust and loose paper; small branches moved.'
+  },
+  {
+    Description: 'Fresh Breeze',
+    Specification: 'Small trees in leaf begin to sway; crested wavelets form on inland waters.'
+  },
+  {
+    Description: 'Strong Breeze',
+    Specification: 'Large branches in motion; whistling heard in telegraph wires; umbrellas used with difficulty.'
+  },
+  {
+    Description: 'Near Gale',
+    Specification: 'Whole trees in motion; inconvenience felt when walking against the wind.'
+  },
+  {
+    Description: 'Gale',
+    Specification: 'Twigs break off trees; generally impedes progress.'
+  },
+  {
+    Description: 'Strong Gale',
+    Specification: 'Slight structural damage (chimney pots and slates removed).'
+  },
+  {
+    Description: 'Storm',
+    Specification: 'Seldom experienced inland; trees uprooted; considerable structural damage'
+  },
+  {
+    Description: 'Violent Storm',
+    Specification: 'Very rarely experienced; accompanied by widespread damage.'
+  },
+  {
+    Description: 'Hurricane',
+    Specification: 'Devastation'
+  }
+];
+
+
+// draws the wind compass based on the values in needle
+function drawWind(needle) {
+  let canvas = document.getElementById('wind');
+  //get context
+  let wind = canvas.getContext('2d');
+  // get properties of canvas
+  width = Number(getComputedStyle(canvas).getPropertyValue("width").slice(0, -2));
+  height = Number(getComputedStyle(canvas).getPropertyValue("height").slice(0, -2));
+
+  // to find radius for gauge
+  if (width >= height) {
+    size = height;
+  } else {
+    size = width;
+  }
+
+  // clear canvas
+  wind.clearRect(0, 0, width, height); // clear canvas
+
+  // adjust dimensions based on canvas dimensions
+  wind.lineWidth = size * 0.04;
+  gaugeRadius = (-wind.lineWidth - size * 0.1) + size / 2;
+  windFontSize = size / 10;
+  wind.font = windFontSize + "px Arial";
+  needle.base = size * 0.04;
+  needle.height = needle.base * 3.2;
+
+  // set colours from CSS
+  wind.fillStyle = cssvar('--page-text-colour');
+  wind.strokeStyle = cssvar('--wind-gauge-colour');
+
+  // print wind direction, speed and Beaufort description in centre of dial
+  wind.textAlign = "center";
+  wind.fillText(needle.targetCardinal, width / 2, -0.2 * windFontSize + height / 2);
+  wind.fillText(Math.round(needle.windSpeed * 10) / 10 , width / 2, 0.8 * windFontSize + height / 2);
+  //wind.fillText(needle.bfDesc,width/2,1.3*windFontSize+height/2);
+
+  // draw dial
+  wind.beginPath();
+  wind.fillStyle = cssvar('--wind-needle-colour');
+  wind.strokeStyle = cssvar('--wind-gauge-colour');
+  wind.translate(width / 2, height / 2);
+  wind.arc(0, 0, gaugeRadius, 0, Math.PI * 2); //draw outer arc
+  wind.stroke();
+
+  // draw needle
+  wind.beginPath();
+  wind.rotate(needle.degrees * Math.PI / 180); //rotate to draw at current deg value
+  wind.translate(0, -gaugeRadius - wind.lineWidth / 2); // move to radius
+  wind.lineTo(needle.base, 0); // draw half of base line
+  wind.lineTo(0, needle.height); // draw to point
+  wind.lineTo(-needle.base, 0); // draw back to other end of base line
+  wind.fill(); // close fill triangle
+
+  wind.translate(0, gaugeRadius + wind.lineWidth / 2); // move back to centre of canvas
+  wind.rotate(-needle.degrees * Math.PI / 180); //rotate back to beginning
+  wind.translate(-width / 2, -height / 2); // move back to (0,0) ready for next animation
+
+}
+
+// updates values in needle then draws and will animate until target angle is met
+function rotateWindNeedle() {
+  // get direction to move compass in
+
+  change = needle.targetDegrees - needle.degrees; // difference between current angle and target
+  if (change != 0) { // if there is a difference between current direction and new direction
+    if (((change + 360) % 360 > 180) && needle.moving == 0) { //(clockwise, anti-clockwise whichever is closest)
+      needle.direction = -1; // anti-clockwise
+    }
+    needle.moving = 1; // to show that we've started animation
+    needle.degrees = needle.degrees + needle.direction; // add/remove degree per animation loop
+
+    // deal with 0/360 degree
+    if (needle.degrees > 359)
+      needle.degrees = 0;
+    if (needle.degrees < 0)
+      needle.degrees = 359;
+
+    // draw the canvas then request next frame in animation
+    drawWind(needle);
+    requestAnimationFrame(rotateWindNeedle);
+  } else { // current and target are now the same, animation complete
+	// may be same direction but different speed, so draw needle to update text
+	drawWind(needle);
+    needle.moving = 0;
+    needle.direction = 1;
+  }
+}
+
+function cardinal(deg){
+	 if (deg>11.25 && deg<=33.75){
+    return "NNE";
+  }else if (deg>33.75 && deg<=56.25){
+    return "NE";
+  }else if (deg>56.25 && deg<=78.75){
+    return "ENE";
+  }else if (deg>78.75 && deg<=101.25){
+    return "E";
+  }else if (deg>101.25 && deg<=123.75){
+    return "ESE";
+  }else if (deg>123.75 && deg<=146.25){
+    return "SE";
+  }else if (deg>146.25 && deg<=168.75){
+    return "SSE";
+  }else if (deg>168.75 && deg<=191.25){
+    return "S";
+  }else if (deg>191.25 && deg<=213.75){
+    return "SSW";
+  }else if (deg>213.75 && deg<=236.25){
+    return "SW";
+  }else if (deg>236.25 && deg<=258.75){
+    return "WSW";
+  }else if (deg>258.75 && deg<=281.25){
+    return "W";
+  }else if (deg>281.25 && deg<=303.75){
+    return "WNW";
+  }else if (deg>303.75 && deg<=326.25){
+    return "NW";
+  }else if (deg>326.25 && deg<=348.75){
+    return "NNW";
+  }else{
+    return "N"; 
+  }
+}// end cardinal
+
+
+
