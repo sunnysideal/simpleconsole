@@ -1,10 +1,4 @@
 {
-"config":
-  {"latitude_deg":"$station.latitude[0]","latitude_minutes":"$station.latitude[1]","latitude_heading":"$station.latitude[2]",
-   "longitude_deg":"$station.longitude[0]","longitude_minutes":"$station.longitude[1]","longitude_heading":"$station.longitude[2]",
-    "owmkey":"$Extras.owmkey", "consoleunits":"$Extras.consoleunits","gap":"$Extras.fcInterval"
-},
-
 "current":
   {"obs_date":"$current.dateTime.format("%a %d %b")","obs_time":"$current.dateTime.format("%H:%M")","air_temperature":"$current.outTemp.format(add_label=False)","air_temperature_min":"$day.outTemp.min","air_temperature_min_time":"$day.outTemp.minTime.format("%H:%M")",
                                         "air_temperature_max":"$day.outTemp.max","air_temperature_max_time":"$day.outTemp.maxTime.format("%H:%M")",
